@@ -57,7 +57,7 @@ namespace fr {
   protected:
     int id;
   };
-  struct frBlockObjectComp {
+  struct frBlockObjectComp {  //升序排列，自定义比较函数重载
     bool operator()(const frBlockObject* lhs, const frBlockObject* rhs) const {
       return *lhs < *rhs;
     }
