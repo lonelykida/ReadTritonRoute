@@ -713,24 +713,31 @@ void FlexTAWorker::addCost(taPinFig *fig, set<taPin *, frBlockObjectComp> *pinS)
     modCost(fig, true, pinS);
 }
 
+//"减去成本"还是"子成本"？
 void FlexTAWorker::subCost(taPinFig *fig, set<taPin *, frBlockObjectComp> *pinS)
 {
     modCost(fig, false, pinS);
 }
 
+//估计应该是modify Cost - 修改成本
 void FlexTAWorker::modCost(taPinFig *fig, bool isAddCost, set<taPin *, frBlockObjectComp> *pinS)
 {
+    //若该形状是路径段
     if (fig->typeId() == tacPathSeg)
     {
+        //获取路径形状
         auto obj = static_cast<taPathSeg *>(fig);
+        //获取该形状所在的层
         auto layerNum = obj->getLayerNum();
+        //获取该形状的边框
         frBox box;
         obj->getBBox(box);
+        // 
         modMinSpacingCostPlanar(box, layerNum, obj, isAddCost, pinS); // must be current TA layer
         modMinSpacingCostVia(box, layerNum, obj, isAddCost, true, true, pinS);
         modMinSpacingCostVia(box, layerNum, obj, isAddCost, false, true, pinS);
     }
-    else if (fig->typeId() == tacVia)
+    else if (fig->typeId() == tacVia)   //否则若是通孔形状
     {
         auto obj = static_cast<taVia *>(fig);
         frBox box;
@@ -1356,14 +1363,19 @@ void FlexTAWorker::assignIroute_updateIroute(taPin *iroute, frCoord bestTrackLoc
     iroute->addNumAssigned();
 }
 
+//iroute分配的初始化
 void FlexTAWorker::assignIroute_init(taPin *iroute, set<taPin *, frBlockObjectComp> *pinS)
 {
+    //定义查询区域
     auto &workerRegionQuery = getWorkerRegionQuery();
     // subCost
+    //若还未初始化
     if (!isInitTA())
     {
+        //对每个iroute中的形状
         for (auto &uPinFig : iroute->getFigs())
         {
+            //将其从区域查询中移除
             workerRegionQuery.remove(uPinFig.get());
             subCost(uPinFig.get(), pinS);
         }
@@ -1469,13 +1481,16 @@ void FlexTAWorker::assignIroute(taPin *iroute)
 
     //按升序排列taPin指针
     set<taPin *, frBlockObjectComp> pinS;
-    //到这儿就还没看了........................................
+    //分配iroute的初始化工作
     assignIroute_init(iroute, &pinS);
+    //层号
     frLayerNum lNum;
     int idx1, idx2;
+    //将iroute分配到可能的层上去
     assignIroute_availTracks(iroute, lNum, idx1, idx2);
+    //确定最佳轨道的位置
     auto bestTrackLoc = assignIroute_bestTrack(iroute, lNum, idx1, idx2);
-
+    //更新iroute
     assignIroute_updateIroute(iroute, bestTrackLoc, &pinS);
     assignIroute_updateOthers(pinS);
 }
